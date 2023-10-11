@@ -4,8 +4,6 @@
 <head>
     <title>Basic Banking System</title>
     <style>
-        /* Add your CSS styles here */
-        /* Example styles for simplicity */
         body {
             font-family: Arial, sans-serif;
         }
@@ -200,42 +198,6 @@
                 });
         }
 
-        // // Function to complete the transfer
-        // function completeTransfer() {
-        //     const amount = parseFloat(document.getElementById('transferAmount').value);
-        //     const senderId = document.getElementById('senderId').value;
-        //     const receiverId = document.getElementById('receiverId').value;
-
-        //     if (amount > 0) {
-        //         // Prepare the data to send to the server
-        //         const data = {
-        //             sender: senderId,
-        //             receiver: receiverId,
-        //             amount: amount,
-        //         };
-
-        //         // Send a POST request to the /transfer route
-        //         fetch('/transfer', {
-        //             method: 'POST',
-        //             headers: {
-        //                 'Content-Type': 'application/json',
-        //             },
-        //             body: JSON.stringify(data),
-        //         })
-        //         .then(response => response.json())
-        //         .then(result => {
-        //             alert(`Transfer successful: $${amount}`);
-        //             cancelTransfer(); // Hide the form
-        //             viewCustomer(receiverId); // Refresh the customer details
-        //         })
-        //         .catch(error => {
-        //             alert('Transfer failed. Please try again later.');
-        //             console.error('Error transferring money:', error);
-        //         });
-        //     } else {
-        //         alert('Invalid amount. Please enter a valid amount.');
-        //     }
-        // }
     function completeTransfer() {
         const amount = parseFloat(document.getElementById('transferAmount').value);
         const senderId = document.getElementById('senderId').value;
