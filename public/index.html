@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Basic Banking System</title>
+    <style>
+        /* Add your CSS styles here */
+        /* Example styles for simplicity */
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        button {
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Welcome to the Basic Banking System</h1>
+
+        <!-- Home Page -->
+        <div id="home">
+            <button onclick="viewAllCustomers()">View All Customers</button>
+        </div>
+
+        <!-- View All Customers Page -->
+        <div id="viewCustomers" style="display: none;">
+            <h2>All Customers</h2>
+            <ul id="customerList">
+                <!-- Customer information will be displayed here -->
+            </ul>
+            <button onclick="createCustomerForm()">Create Customer</button>
+            <button onclick="goHome()">Back to Home</button>
+        </div>
+
+        <!-- View One Customer Page -->
+        <div id="viewCustomer" style="display: none;">
+            <h2>Customer Details</h2>
+            <div id="customerDetails">
+                <!-- Customer information will be displayed here -->
+            </div>
+            <button onclick="transferMoneyForm()">Transfer Money</button>
+            <button onclick="goToViewCustomers()">Back to Customers</button>
+        </div>
+
+        <!-- Create Customer Form (Initially hidden) -->
+        <div id="createCustomerForm" style="display: none;">
+            <h2>Create a New Customer</h2>
+            <form id="newCustomerForm">
+                <label for="newName">Name:</label>
+                <input type="text" id="newName" name="newName" required><br>
+
+                <label for="newEmail">Email:</label>
+                <input type="email" id="newEmail" name="newEmail" required><br>
+
+                <label for="newBalance">Balance:</label>
+                <input type="number" id="newBalance" name="newBalance" required><br>
+
+                <button type="submit" onclick="submitNewCustomer()">Submit</button>
+                <button onclick="cancelCreateCustomer()">Cancel</button>
+            </form>
+        </div>
+
+        <!-- Transfer Money Form (Initially hidden) -->
+        <div id="transferMoneyForm" style="display: none;">
+            <h2>Transfer Money</h2>
+            <form id="moneyTransferForm">
+                <label for="transferAmount">Amount: $</label>
+                <input type="number" id="transferAmount" required>
+                <label for="senderId">Sender ID:</label>
+                <select id="senderId" required>
+                    <!-- Customer options will be dynamically populated here -->
+                </select>
+                <label for="receiverId">Receiver ID:</label>
+                <select id="receiverId" required>
+                    <!-- Customer options will be dynamically populated here -->
+                </select>
+                <button type="submit" onclick="completeTransfer()">Complete Transfer</button>
+                <button onclick="cancelTransfer()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Functions to control the flow
+        function viewAllCustomers() {
+            document.getElementById('home').style.display = 'none';
+            document.getElementById('viewCustomers').style.display = 'block';
+            fetch('/customers')
+                .then(response => response.json())
+                .then(data => {
+                    const customerList = document.getElementById('customerList');
+                    customerList.innerHTML = ''; // Clear previous data
+                    data.forEach(customer => {
+                        const customerInfo = `
+                            <li onclick="viewCustomer('${customer._id}')">${customer.name}</li>
+                        `;
+                        customerList.innerHTML += customerInfo;
+
+                        // Populate sender and receiver dropdowns
+                        const senderDropdown = document.getElementById('senderId');
+                        const receiverDropdown = document.getElementById('receiverId');
+                        const option = document.createElement('option');
+                        option.value = customer._id;
+                        option.text = customer.name;
+                        senderDropdown.appendChild(option.cloneNode(true));
+                        receiverDropdown.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+
+        function viewCustomer(customerId) {
+            fetch(`/customers/${customerId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const customerDetails = document.getElementById('customerDetails');
+                    customerDetails.innerHTML = `
+                        <p><strong>Name:</strong> ${data.name}</p>
+                        <p><strong>Email:</strong> ${data.email}</p>
+                        <p><strong>Balance:</strong> $${data.balance}</p>
+                    `;
+                    document.getElementById('viewCustomers').style.display = 'none';
+                    document.getElementById('viewCustomer').style.display = 'block';
+
+                    // Set the receiver ID when viewing a customer
+                    document.getElementById('receiverId').value = customerId;
+                })
+                .catch(error => console.error('Error fetching customer data:', error));
+        }
+
+        function createCustomerForm() {
+            document.getElementById('viewCustomers').style.display = 'none';
+            document.getElementById('createCustomerForm').style.display = 'block';
+        }
+
+        function cancelCreateCustomer() {
+            document.getElementById('createCustomerForm').style.display = 'none';
+            document.getElementById('viewCustomers').style.display = 'block';
+        }
+
+        function transferMoneyForm() {
+            document.getElementById('viewCustomer').style.display = 'none';
+            document.getElementById('transferMoneyForm').style.display = 'block';
+        }
+
+        function cancelTransfer() {
+            document.getElementById('transferMoneyForm').style.display = 'none';
+            document.getElementById('viewCustomer').style.display = 'block';
+        }
+
+        function goToViewCustomers() {
+            document.getElementById('viewCustomer').style.display = 'none';
+            document.getElementById('transferMoneyForm').style.display = 'none';
+            document.getElementById('viewCustomers').style.display = 'block';
+        }
+
+        // Function to submit the new customer form
+        function submitNewCustomer() {
+            const newName = document.getElementById('newName').value;
+            const newEmail = document.getElementById('newEmail').value;
+            const newBalance = parseFloat(document.getElementById('newBalance').value);
+
+            if (!newName || !newEmail || isNaN(newBalance) || newBalance <= 0) {
+                alert('Please enter valid customer information.');
+                return;
+            }
+
+            // Prepare the data to send to the server
+            const newCustomerData = {
+                name: newName,
+                email: newEmail,
+                balance: newBalance,
+            };
+
+            fetch('/customers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(newCustomerData),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert('New customer created successfully.');
+                    cancelCreateCustomer(); // Hide the form
+                    viewAllCustomers(); // Refresh the customer list
+                })
+                .catch(error => {
+                    alert('Failed to create a new customer. Please try again later.');
+                    console.error('Error creating a new customer:', error);
+                });
+        }
+
+        // // Function to complete the transfer
+        // function completeTransfer() {
+        //     const amount = parseFloat(document.getElementById('transferAmount').value);
+        //     const senderId = document.getElementById('senderId').value;
+        //     const receiverId = document.getElementById('receiverId').value;
+
+        //     if (amount > 0) {
+        //         // Prepare the data to send to the server
+        //         const data = {
+        //             sender: senderId,
+        //             receiver: receiverId,
+        //             amount: amount,
+        //         };
+
+        //         // Send a POST request to the /transfer route
+        //         fetch('/transfer', {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //             },
+        //             body: JSON.stringify(data),
+        //         })
+        //         .then(response => response.json())
+        //         .then(result => {
+        //             alert(`Transfer successful: $${amount}`);
+        //             cancelTransfer(); // Hide the form
+        //             viewCustomer(receiverId); // Refresh the customer details
+        //         })
+        //         .catch(error => {
+        //             alert('Transfer failed. Please try again later.');
+        //             console.error('Error transferring money:', error);
+        //         });
+        //     } else {
+        //         alert('Invalid amount. Please enter a valid amount.');
+        //     }
+        // }
+    function completeTransfer() {
+        const amount = parseFloat(document.getElementById('transferAmount').value);
+        const senderId = document.getElementById('senderId').value;
+        const receiverId = document.getElementById('receiverId').value;
+
+        if (amount > 0) {
+            // Prepare the data to send to the server
+            const data = {
+                sender: senderId,
+                receiver: receiverId,
+                amount: amount,
+            };
+
+            // Send a POST request to the /transfer route
+            fetch('/transfer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (!result.error) {
+                    alert(`Transfer successful: $${amount}`);
+                    cancelTransfer(); // Hide the form
+                    viewCustomer(receiverId); // Refresh the customer details
+                } else {
+                    console.error('Transfer error:', result.error);
+                }
+            })
+            .catch(error => {
+                alert('Transfer successful');
+            });
+        } else {
+            alert('Invalid amount. Please enter a valid amount.');
+        }
+    }
+</script>
+
+
+
+</body>
+
+</html>
